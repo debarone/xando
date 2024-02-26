@@ -1,5 +1,6 @@
 defmodule Xando.Game do
-  
+  alias TableRex.Table
+
   def init_game() do
     %{
       result: "",
@@ -72,6 +73,15 @@ defmodule Xando.Game do
        "b3" -> 7
        _ -> 8 # Assume that anything else is the last element
     end
+  end
+
+  def print_board(board) do
+    Tuple.to_list(board)
+    |> Enum.chunk_every(3)
+    |> Table.new([])
+    |> Table.put_column_meta(:all, align: :center)
+    |> Table.render!(horizontal_style: :all)
+    |> IO.puts
   end
 
 end
