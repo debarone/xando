@@ -5,7 +5,7 @@ defmodule XandoTest do
   alias Xando.Game
 
   setup_all do
-    {:ok, grid_size: 4}
+    {:ok, grid_size: 4, game: Game.init_game(3)}
   end
 
   test "can initialise game", state do
@@ -23,11 +23,11 @@ defmodule XandoTest do
       |> List.flatten
   end
 
-  test "can make a moves" do
-    game = Game.init_game(3)
+  test "can make a moves", state do
+    game = state[:game]
     game = Game.play("X", {0, 0}, game)
-    game = Game.play("O", {1, 1}, game)
-    game = Game.play("X", {2, 2}, game)
+      |> (&Game.play("O", {1, 1}, &1)).()
+      |> (&Game.play("X", {2, 2}, &1)).()
     boad_str = Map.values(game.board) |> List.to_string
 
     assert game.complete == false
@@ -35,6 +35,41 @@ defmodule XandoTest do
     assert game.next_move == "O"
     assert game.comment == "next move O"
     assert boad_str == "X   O   X"
+  end
+
+  test "cannot make opponent move on occupied square", state do
+    game = state[:game]
+    game = Game.play("X", {0, 0}, game)
+      |> (&Game.play("O", {0, 0}, &1)).()
+    {err, _} = game.comment
+
+    assert Map.get(game.board, {0, 0}) == "X"
+    assert err == :error
+  end
+
+  # Completion scenarios
+  test "won by rows #1", state do
+    game = state[:game]
+    game = Game.play("X", {0, 0}, game)
+      |> (&Game.play("O", {1, 1}, &1)).()
+      |> (&Game.play("X", {0, 1}, &1)).()
+      |> (&Game.play("O", {2, 2}, &1)).()
+      |> (&Game.play("X", {0, 2}, &1)).()
+
+    assert game.complete == true
+    assert game.comment == "X wins by row"
+  end
+
+  test "won by columns #1", state do
+    game = state[:game]
+    game = Game.play("X", {0, 0}, game)
+      |> (&Game.play("O", {1, 1}, &1)).()
+      |> (&Game.play("X", {1, 0}, &1)).()
+      |> (&Game.play("O", {2, 2}, &1)).()
+      |> (&Game.play("X", {2, 0}, &1)).()
+
+    assert game.complete == true
+    assert game.comment == "X wins by column"
   end
 
 end
